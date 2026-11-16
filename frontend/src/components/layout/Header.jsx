@@ -100,7 +100,7 @@ export default function Header() {
           <button 
             type="button" 
             className="navbar-search-btn hide-tablet"
-            onClick={() => navigate('/explore')}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
             title="Search destinations (⌘K)"
           >
             <FiSearch size={14} className="text-muted" />

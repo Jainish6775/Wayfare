@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { FiArrowLeft, FiPlus, FiMapPin, FiDollarSign, FiCalendar, FiEye, FiShare2, FiTrash2, FiX, FiLayers, FiCheck } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { tripsAPI, stopsAPI } from '../../services/api';
 import { sampleTripDetailsMap, sampleItinerarySectionsMap } from '../../data/sampleTrips';
 import MapView from '../../components/common/MapView';
+import LoadingScreen from '../../components/common/LoadingScreen';
 import './ItineraryBuilder.css';
 
 export default function ItineraryBuilder() {
@@ -228,6 +230,36 @@ export default function ItineraryBuilder() {
     }
   };
 
+  const handleOnDragEnd = async (result) => {
+    if (!result.destination) return;
+    const sourceIndex = result.source.index;
+    const destIndex = result.destination.index;
+    if (sourceIndex === destIndex) return;
+
+    const reordered = Array.from(sections);
+    const [moved] = reordered.splice(sourceIndex, 1);
+    reordered.splice(destIndex, 0, moved);
+
+    const updated = reordered.map((sec, idx) => ({
+      ...sec,
+      number: idx + 1
+    }));
+
+    setSections(updated);
+
+    try {
+      const validStops = updated
+        .filter(s => typeof s.id === 'number' || !isNaN(Number(s.id)))
+        .map((s, idx) => ({ id: Number(s.id), sequenceOrder: idx + 1 }));
+
+      if (validStops.length > 0) {
+        await stopsAPI.reorder(id, { stops: validStops });
+      }
+    } catch (err) {
+      console.warn('Reorder sync notice:', err.message);
+    }
+  };
+
   const getSectionIcon = (type) => {
     switch (type) {
       case 'hotel': return '🏨';
@@ -241,11 +273,7 @@ export default function ItineraryBuilder() {
   const totalTripBudget = Number(trip?.budget || 0);
 
   if (loading) {
-    return (
-      <div className="loading-spinner-container">
-        <div className="spinner"></div>
-      </div>
-    );
+    return <LoadingScreen fullScreen={false} message="Synchronizing mission flight path & waypoint matrices..." />;
   }
 
   return (
@@ -303,61 +331,91 @@ export default function ItineraryBuilder() {
             </div>
           </div>
 
-          {/* Section Cards List */}
-          <div className="timeline-cards-stack">
-            {sections.map((section, idx) => (
-              <div key={section.id} className="timeline-dossier-card">
-                
-                {/* Section Header */}
-                <div className="timeline-card-header">
-                  <div className="flex items-center gap-3">
-                    <span className="sequence-step-pill">STAGE 0{idx + 1}</span>
-                    <span className="sequence-type-emoji">{getSectionIcon(section.type)}</span>
-                    <h3 className="sequence-section-title">{section.title}</h3>
-                  </div>
+          {/* Section Cards List with Drag-and-Drop */}
+          <DragDropContext onDragEnd={handleOnDragEnd}>
+            <Droppable droppableId="itinerary-sections-droppable">
+              {(provided) => (
+                <div 
+                  className="timeline-cards-stack"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  {sections.map((section, idx) => (
+                    <Draggable 
+                      key={String(section.id)} 
+                      draggableId={String(section.id)} 
+                      index={idx}
+                    >
+                      {(providedDraggable, snapshot) => (
+                        <div 
+                          ref={providedDraggable.innerRef}
+                          {...providedDraggable.draggableProps}
+                          className={`timeline-dossier-card ${snapshot.isDragging ? 'is-dragging' : ''}`}
+                        >
+                          
+                          {/* Section Header with Drag Handle */}
+                          <div className="timeline-card-header">
+                            <div className="flex items-center gap-3">
+                              <span 
+                                className="drag-grip-handle" 
+                                {...providedDraggable.dragHandleProps} 
+                                title="Drag to reorder stage"
+                              >
+                                ⋮⋮
+                              </span>
+                              <span className="sequence-step-pill">STAGE 0{idx + 1}</span>
+                              <span className="sequence-type-emoji">{getSectionIcon(section.type)}</span>
+                              <h3 className="sequence-section-title">{section.title}</h3>
+                            </div>
 
-                  <button
-                    className="btn-icon text-muted"
-                    onClick={() => handleDeleteSection(section.id)}
-                    title="Remove Section"
-                  >
-                    <FiTrash2 size={13} />
-                  </button>
-                </div>
+                            <button
+                              className="btn-icon text-muted"
+                              onClick={() => handleDeleteSection(section.id)}
+                              title="Remove Section"
+                            >
+                              <FiTrash2 size={13} />
+                            </button>
+                          </div>
 
-                {/* Section Content */}
-                <div className="timeline-card-body">
-                  <p className="sequence-desc-text">{section.description}</p>
+                          {/* Section Content */}
+                          <div className="timeline-card-body">
+                            <p className="sequence-desc-text">{section.description}</p>
 
-                  {/* Sub-items list */}
-                  {section.items && section.items.length > 0 && (
-                    <div className="sequence-subitems-panel mt-3">
-                      {section.items.map(item => (
-                        <div key={item.id} className="subitem-entry">
-                          <span className="subitem-title">• {item.name} <span className="subitem-category">[{item.type}]</span></span>
-                          <span className="subitem-price font-mono font-bold">${item.cost}</span>
+                            {/* Sub-items list */}
+                            {section.items && section.items.length > 0 && (
+                              <div className="sequence-subitems-panel mt-3">
+                                {section.items.map(item => (
+                                  <div key={item.id} className="subitem-entry">
+                                    <span className="subitem-title">• {item.name} <span className="subitem-category">[{item.type}]</span></span>
+                                    <span className="subitem-price font-mono font-bold">${item.cost}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Date & Budget Pills */}
+                            <div className="sequence-footer-pills mt-4">
+                              <div className="sequence-pill">
+                                <FiCalendar size={12} />
+                                <span>{section.startDate} – {section.endDate}</span>
+                              </div>
+
+                              <div className="sequence-pill budget">
+                                <FiDollarSign size={12} />
+                                <span>Allocated: <strong>${Number(section.budget || 0).toLocaleString()}</strong></span>
+                              </div>
+                            </div>
+                          </div>
+
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Date & Budget Pills */}
-                  <div className="sequence-footer-pills mt-4">
-                    <div className="sequence-pill">
-                      <FiCalendar size={12} />
-                      <span>{section.startDate} – {section.endDate}</span>
-                    </div>
-
-                    <div className="sequence-pill budget">
-                      <FiDollarSign size={12} />
-                      <span>Allocated: <strong>${Number(section.budget || 0).toLocaleString()}</strong></span>
-                    </div>
-                  </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-
-              </div>
-            ))}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
 
           {/* Add Section Button */}
           <button 

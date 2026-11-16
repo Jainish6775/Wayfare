@@ -4,6 +4,10 @@ import { FiArrowLeft, FiMapPin, FiCalendar, FiClock, FiEdit2, FiPieChart, FiList
 import { toast } from 'react-hot-toast';
 import { tripsAPI, expensesAPI, stopsAPI } from '../../services/api';
 import { sampleTripDetailsMap } from '../../data/sampleTrips';
+import LiveWeatherWidget from '../../components/common/LiveWeatherWidget';
+import { fetchLiveExchangeRates } from '../../services/liveData';
+import famousCitiesData from '../../data/famousCities';
+import LoadingScreen from '../../components/common/LoadingScreen';
 import './TripDetails.css';
 
 export default function TripDetails() {
@@ -18,6 +22,23 @@ export default function TripDetails() {
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Live Currency Rates state
+  const [currencyRates, setCurrencyRates] = useState({
+    USD: { rate: 1, symbol: '$' },
+    EUR: { rate: 0.92, symbol: '€' },
+    GBP: { rate: 0.79, symbol: '£' },
+    INR: { rate: 84.5, symbol: '₹' },
+    JPY: { rate: 154.2, symbol: '¥' },
+    CAD: { rate: 1.38, symbol: 'C$' },
+    CHF: { rate: 0.88, symbol: 'CHF' },
+  });
+
+  useEffect(() => {
+    fetchLiveExchangeRates().then(live => {
+      if (live) setCurrencyRates(live);
+    });
+  }, []);
+
   // New Expense Form State
   const [newExpense, setNewExpense] = useState({
     title: '',
@@ -25,13 +46,6 @@ export default function TripDetails() {
     amount: '',
     notes: ''
   });
-
-  const currencyRates = {
-    USD: { rate: 1, symbol: '$' },
-    EUR: { rate: 0.92, symbol: '€' },
-    GBP: { rate: 0.79, symbol: '£' },
-    INR: { rate: 83.2, symbol: '₹' },
-  };
 
   const fetchTripData = useCallback(async () => {
     try {
@@ -134,6 +148,22 @@ export default function TripDetails() {
 
   const breakdownData = getItineraryCategoryBreakdown();
 
+  const getDestinationCoords = () => {
+    const loc = trip?.starting_location || '';
+    const city = famousCitiesData.find(c => 
+      loc.toLowerCase().includes(c.name.toLowerCase()) || 
+      c.name.toLowerCase().includes(loc.toLowerCase()) ||
+      (c.country && loc.toLowerCase().includes(c.country.toLowerCase()))
+    );
+    if (city && city.latitude && city.longitude) {
+      return { lat: city.latitude, lon: city.longitude, name: `${city.name}, ${city.country}` };
+    }
+    if (stops.length > 0 && stops[0].latitude && stops[0].longitude) {
+      return { lat: Number(stops[0].latitude), lon: Number(stops[0].longitude), name: stops[0].destination_name || loc };
+    }
+    return { lat: 35.0116, lon: 135.7681, name: loc || 'Kyoto, Japan' };
+  };
+
   const handleCopyShareLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -196,11 +226,7 @@ export default function TripDetails() {
   };
 
   if (loading) {
-    return (
-      <div className="loading-spinner-container">
-        <div className="spinner"></div>
-      </div>
-    );
+    return <LoadingScreen fullScreen={false} message="Decrypting expedition dossier & telemetry data..." />;
   }
 
   return (
@@ -261,6 +287,9 @@ export default function TripDetails() {
             <option value="EUR">EUR (€)</option>
             <option value="GBP">GBP (£)</option>
             <option value="INR">INR (₹)</option>
+            <option value="JPY">JPY (¥)</option>
+            <option value="CAD">CAD (C$)</option>
+            <option value="CHF">CHF (Fr)</option>
           </select>
 
           <button className="btn btn-secondary btn-sm" onClick={handleCopyShareLink} title="Copy shareable link">
@@ -277,6 +306,20 @@ export default function TripDetails() {
           </button>
         </div>
       </div>
+
+      {/* Live Destination Climate & Weather Telemetry */}
+      {(() => {
+        const coords = getDestinationCoords();
+        return (
+          <div className="mb-6">
+            <LiveWeatherWidget 
+              latitude={coords.lat} 
+              longitude={coords.lon} 
+              destinationName={coords.name} 
+            />
+          </div>
+        );
+      })()}
 
       {isOverBudget && viewMode === 'budget' && (
         <div className="alert alert-error mb-6">

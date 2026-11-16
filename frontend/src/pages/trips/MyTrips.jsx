@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiMapPin, FiCalendar, FiClock, FiDollarSign, FiSearch, FiGrid, FiList, FiArrowRight, FiSliders, FiActivity, FiShield } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiMapPin, FiCalendar, FiClock, FiSearch, FiGrid, FiList, FiArrowRight, FiSliders } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { tripsAPI } from '../../services/api';
 import { sampleTrips } from '../../data/sampleTrips';

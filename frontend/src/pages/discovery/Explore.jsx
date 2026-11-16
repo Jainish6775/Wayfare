@@ -4,6 +4,7 @@ import { FiSearch, FiMapPin, FiHeart, FiClock, FiDollarSign, FiX, FiArrowRight, 
 import { toast } from 'react-hot-toast';
 import { destinationsAPI, activitiesAPI, savedAPI } from '../../services/api';
 import famousCitiesData from '../../data/famousCities';
+import LiveWeatherWidget from '../../components/common/LiveWeatherWidget';
 import { Skeleton } from '../../components/common/Skeleton';
 import './Explore.css';
 
@@ -340,6 +341,17 @@ export default function Explore() {
               <p className="text-xs text-secondary line-height-relaxed mb-6">
                 {selectedDestination.description}
               </p>
+
+              {/* Live Climate Telemetry Widget */}
+              {selectedDestination.latitude && selectedDestination.longitude && (
+                <div className="mb-6">
+                  <LiveWeatherWidget 
+                    latitude={selectedDestination.latitude} 
+                    longitude={selectedDestination.longitude} 
+                    destinationName={`${selectedDestination.name}, ${selectedDestination.country}`}
+                  />
+                </div>
+              )}
 
               {/* Activities inside modal */}
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">Top Experiences in {selectedDestination.name}</h4>

@@ -1,44 +1,439 @@
-/* ============================================
-   Loading Screen (Dark SaaS Theme)
-   ============================================ */
+/* =========================================================
+   Wayfare OS Futuristic Executive Loading Screen
+   ========================================================= */
 
-.loading-screen {
+.wayfare-loader-overlay {
   position: fixed;
   inset: 0;
-  background-color: var(--bg-canvas);
+  background: #060913;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  overflow: hidden;
+  user-select: none;
+}
+
+.wayfare-loader-inline-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  width: 100%;
+}
+
+/* Deep Ambient Cosmic Glow Orbs */
+.loader-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  opacity: 0.35;
+  animation: orbDrift 8s ease-in-out infinite alternate;
+}
+
+.orb-primary {
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, #1d4ed8, transparent 70%);
+  top: 15%;
+  left: 20%;
+}
+
+.orb-cyan {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, #0891b2, transparent 70%);
+  bottom: 15%;
+  right: 20%;
+  animation-delay: -3s;
+}
+
+.orb-violet {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, #6d28d9, transparent 70%);
+  top: 50%;
+  right: 35%;
+  animation-delay: -5s;
+}
+
+@keyframes orbDrift {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.15) translate(25px, -20px); }
+  100% { transform: scale(0.95) translate(-20px, 25px); }
+}
+
+/* Subtle Technical Grid Mesh */
+.loader-grid-mesh {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 0%, transparent 75%);
+  pointer-events: none;
+}
+
+/* Glassmorphism Loader Card */
+.wayfare-loader-card {
+  position: relative;
+  z-index: 10;
+  width: 90%;
+  max-width: 440px;
+  background: rgba(13, 20, 36, 0.78);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 38px 34px 26px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  z-index: 9999;
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(56, 189, 248, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  animation: cardFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.loading-screen-logo {
+.inline-loader-card {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+  max-width: 400px;
+  padding: 30px 24px 20px;
+}
+
+@keyframes cardFadeUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Orbital Radar Compass */
+.loader-radar-wrapper {
+  position: relative;
+  width: 108px;
+  height: 108px;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
+  justify-content: center;
+  margin-bottom: 22px;
 }
 
-.loading-screen-logo-text {
-  font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  font-weight: var(--weight-bold);
-  color: var(--text-primary);
-}
-
-.loading-screen-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.08);
-  border-top-color: var(--primary-500);
+.radar-orbit-ring {
+  position: absolute;
   border-radius: 50%;
-  animation: spin 750ms linear infinite;
-  margin-bottom: var(--space-4);
+  pointer-events: none;
 }
 
-.loading-screen-text {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--text-secondary);
+.ring-outer {
+  inset: 0;
+  border: 1.5px dashed rgba(56, 189, 248, 0.4);
+  animation: radarSpin 12s linear infinite;
+}
+
+.ring-mid {
+  inset: 9px;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  animation: radarReverseSpin 8s linear infinite;
+}
+
+.radar-orbit-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg at 50% 50%, rgba(56, 189, 248, 0.3) 0deg, transparent 65deg, transparent 360deg);
+  animation: radarSpin 2.8s linear infinite;
+}
+
+@keyframes radarSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes radarReverseSpin {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.radar-core-logo {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #0f172a;
+  border: 2px solid #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.5);
+}
+
+.loader-logo-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.radar-pulse-flare {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #38bdf8;
+  animation: pulseFlare 2s ease-out infinite;
+}
+
+@keyframes pulseFlare {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.radar-compass-satellite {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 1.5px solid #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38bdf8;
+  top: -4px;
+  right: -4px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+  animation: satelliteOrbit 6s linear infinite;
+}
+
+@keyframes satelliteOrbit {
+  0% { transform: rotate(0deg) translateX(48px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(48px) rotate(-360deg); }
+}
+
+/* Brand Typography */
+.loader-brand-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 18px;
+}
+
+.loader-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loader-brand-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #f8fafc;
+  background: linear-gradient(135deg, #ffffff 40%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.loader-os-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #0284c7;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.08em;
+}
+
+.loader-sub-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* Dynamic Telemetry Box */
+.loader-telemetry-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 6px 14px;
+  margin-bottom: 22px;
+  max-width: 95%;
+  min-height: 32px;
+  width: 100%;
+  justify-content: center;
+}
+
+.telemetry-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  flex-shrink: 0;
+  animation: telemetryPulse 1.6s infinite;
+}
+
+@keyframes telemetryPulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.telemetry-text {
+  font-size: 11px;
+  color: #cbd5e1;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: fadeInText 0.35s ease;
+}
+
+@keyframes fadeInText {
+  from { opacity: 0.2; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* High-Precision Progress Module */
+.loader-progress-module {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.loader-track-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.loader-fill-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #06b6d4, #38bdf8);
+  border-radius: 9999px;
+  position: relative;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+
+.loader-shimmer-spark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: shimmerSweep 1.5s infinite;
+}
+
+@keyframes shimmerSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.loader-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.loader-meta-protocol {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.loader-meta-percent {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-weight: 700;
+  color: #38bdf8;
+  font-size: 12px;
+}
+
+/* Security & Coordinate Footer */
+.loader-card-footer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.loader-footer-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.loader-footer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.loader-coords-stamp {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  color: #475569;
+}
+
+.loader-time-stamp {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  color: #0284c7;
+  background: rgba(14, 165, 233, 0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.loader-skip-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loader-skip-action:hover {
+  color: #f8fafc;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.1);
+  transform: translateX(1px);
 }

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -7,6 +7,7 @@ import PublicLayout from './components/public/PublicLayout';
 import LoadingScreen from './components/common/LoadingScreen';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import MouseEffectsHandler from './components/common/MouseEffectsHandler';
+import CommandPalette from './components/common/CommandPalette';
 import './index.css';
 import './styles/components.css';
 
@@ -61,11 +62,33 @@ function PublicAuthRoute({ children }) {
 }
 
 function App() {
+  const [booting, setBooting] = useState(() => {
+    try {
+      return !sessionStorage.getItem('wayfare_booted');
+    } catch {
+      return false;
+    }
+  });
+
+  const handleBootComplete = () => {
+    setBooting(false);
+    try {
+      sessionStorage.setItem('wayfare_booted', '1');
+    } catch {
+      // safe fallback
+    }
+  };
+
+  if (booting) {
+    return <LoadingScreen onComplete={handleBootComplete} />;
+  }
+
   return (
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
           <MouseEffectsHandler />
+          <CommandPalette />
           <Toaster
             position="top-right"
             toastOptions={{

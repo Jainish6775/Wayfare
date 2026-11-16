@@ -231,3 +231,29 @@
   position: sticky;
   top: calc(var(--header-height) + 16px);
 }
+
+/* Drag and Drop Grip Handle */
+.drag-grip-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 14px;
+  cursor: grab;
+  padding: 2px 6px;
+  border-radius: 4px;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.drag-grip-handle:hover {
+  color: #38bdf8;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.timeline-dossier-card.is-dragging {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 15px rgba(59, 130, 246, 0.4) !important;
+  opacity: 0.95;
+  transform: rotate(1deg);
+}

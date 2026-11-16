@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { FiArrowLeft, FiPlus, FiCheck, FiSave, FiMapPin, FiCalendar, FiDollarSign, FiZap } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { tripsAPI, destinationsAPI, activitiesAPI } from '../../services/api';
+import famousCitiesData from '../../data/famousCities';
 import './CreateTrip.css';
 
 export default function CreateTrip() {
@@ -117,6 +118,37 @@ export default function CreateTrip() {
     toast.success(`Selected "${item.title}"`);
   };
 
+  const handleAutoGenerateBaseline = () => {
+    const loc = formData.startingLocation || formData.title || 'Kyoto';
+    const match = famousCitiesData.find(c => 
+      c.name.toLowerCase().includes(loc.toLowerCase()) || 
+      loc.toLowerCase().includes(c.name.toLowerCase()) ||
+      (c.country && loc.toLowerCase().includes(c.country.toLowerCase()))
+    ) || famousCitiesData[0]; // Kyoto
+
+    const days = match.recommended_days || 5;
+    const today = new Date();
+    const startDate = new Date(today.getFullYear(), today.getMonth() + 1, 10);
+    const endDate = new Date(startDate.getTime() + days * 86400000);
+
+    const costMultiplier = match.cost_level === 'luxury' ? 350 : match.cost_level === 'budget' ? 80 : 180;
+    const estBudget = days * costMultiplier;
+
+    setFormData(prev => ({
+      ...prev,
+      title: `${match.name} ${match.region || 'World'} Expedition & Heritage Trail`,
+      startingLocation: `${match.name}, ${match.country}`,
+      start_date: startDate.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
+      budget_limit: String(estBudget),
+      cover_image: match.image_url || prev.cover_image,
+      description: match.description || `Curated ${days}-day expedition exploring ${match.name}. Features guided landmark visits, local cuisine, and verified stays.`,
+      travel_style: match.region?.toLowerCase().includes('asia') ? 'cultural' : 'coastal'
+    }));
+
+    toast.success(`Generated ${days}-day smart baseline for ${match.name}!`);
+  };
+
   const validateForm = () => {
     const newErrors = {};
     if (!formData.title.trim()) newErrors.title = 'Expedition name is required';
@@ -210,7 +242,18 @@ export default function CreateTrip() {
             {/* Step 1: Destination & Theme */}
             {currentStep === 1 && (
               <div className="studio-step-content animate-fade-in">
-                <h3 className="step-heading">Step 1: Destination & Expedition Name</h3>
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                  <h3 className="step-heading" style={{ marginBottom: 0 }}>Step 1: Destination & Expedition Name</h3>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-xs"
+                    onClick={handleAutoGenerateBaseline}
+                    title="Automatically generate baseline dates, budget, description, and cover image"
+                    style={{ background: 'rgba(59, 130, 246, 0.12)', borderColor: 'rgba(59, 130, 246, 0.3)', color: '#60a5fa' }}
+                  >
+                    <FiZap size={13} /> Auto-Generate Baseline
+                  </button>
+                </div>
                 
                 <div className="form-group mt-4">
                   <label className="form-label">
