@@ -1,6 +1,65 @@
-import React, { useState } from 'react';
-import { FiMapPin, FiCompass, FiNavigation, FiCalendar, FiDollarSign } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { FiCompass, FiCalendar, FiDollarSign } from 'react-icons/fi';
+import famousCitiesData from '../../data/famousCities';
 import './MapView.css';
+
+// Fix Leaflet's default marker asset URLs in bundlers
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+// Helper component to center and zoom map when active stop changes
+function MapFocusController({ center, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center[0] && center[1]) {
+      map.flyTo(center, zoom, { duration: 1 });
+    }
+  }, [center, zoom, map]);
+  return null;
+}
+
+const createNumberedIcon = (number, isActive) => {
+  return L.divIcon({
+    className: 'custom-leaflet-marker-wrap',
+    html: `<div class="leaflet-node-pin ${isActive ? 'active' : ''}"><span>${number}</span></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -14],
+  });
+};
+
+const resolveCoords = (stop, index) => {
+  if (stop.latitude && stop.longitude) {
+    return [Number(stop.latitude), Number(stop.longitude)];
+  }
+  const stopName = (stop.title || stop.destination_name || '').toLowerCase();
+  const city = famousCitiesData.find(c => 
+    stopName.includes(c.name.toLowerCase()) || 
+    c.name.toLowerCase().includes(stopName) ||
+    (c.country && stopName.includes(c.country.toLowerCase()))
+  );
+  if (city && city.latitude && city.longitude) {
+    return [city.latitude, city.longitude];
+  }
+
+  // Fallback spread coordinates across sample destinations
+  const fallbackCoords = [
+    [35.0116, 135.7681], // Kyoto
+    [35.6762, 139.6503], // Tokyo
+    [48.8566, 2.3522],   // Paris
+    [41.9028, 12.4964],  // Rome
+    [46.0207, 7.7491],   // Zermatt
+    [-8.4095, 115.1889], // Bali
+  ];
+  return fallbackCoords[index % fallbackCoords.length];
+};
 
 export default function MapView({ stops = [] }) {
   const [activeStopIndex, setActiveStopIndex] = useState(0);
@@ -17,50 +76,85 @@ export default function MapView({ stops = [] }) {
     );
   }
 
-  const selectedStop = stops[activeStopIndex] || stops[0];
+  // Pre-process stops with resolved coordinates
+  const mappedStops = stops.map((stop, idx) => ({
+    ...stop,
+    coords: resolveCoords(stop, idx),
+  })).filter(s => s.coords !== null);
+
+  const selectedStop = mappedStops[activeStopIndex] || mappedStops[0] || stops[0];
+  const centerCoords = selectedStop?.coords || [35.0116, 135.7681];
+  const polylinePositions = mappedStops.map(s => s.coords);
 
   return (
     <div className="map-view-container">
       
-      {/* Route Graphic Canvas Box */}
+      {/* Route Graphic Canvas Box with Leaflet Map */}
       <div className="route-canvas-box">
         <div className="route-canvas-header">
-          <span className="route-live-badge">📍 {stops.length} Route Legs</span>
-          <span className="route-subtitle font-bold text-xs">{selectedStop.title}</span>
+          <span className="route-live-badge">📍 {mappedStops.length} Route Legs</span>
+          <span className="route-subtitle font-bold text-xs">{selectedStop?.title || 'Route Map'}</span>
         </div>
 
-        {/* SVG Route Connecting Path */}
-        <div className="route-svg-wrapper">
-          <svg className="route-svg-line" viewBox="0 0 300 80" preserveAspectRatio="none">
-            <path 
-              d="M 20 40 Q 80 15, 150 40 T 280 40" 
-              fill="none" 
-              stroke="var(--primary-500)" 
-              strokeWidth="3" 
-              strokeDasharray="6 4"
+        {/* Live Interactive Leaflet Map */}
+        <div className="route-map-leaflet-wrapper">
+          <MapContainer
+            center={centerCoords}
+            zoom={5}
+            scrollWheelZoom={false}
+            className="route-leaflet-container"
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             />
-          </svg>
+            
+            <MapFocusController center={centerCoords} zoom={5} />
 
-          {/* Interactive Stop Nodes */}
-          <div className="route-nodes-row">
-            {stops.map((stop, idx) => (
-              <button 
+            {/* Polyline connecting stops */}
+            {polylinePositions.length > 1 && (
+              <Polyline
+                positions={polylinePositions}
+                pathOptions={{
+                  color: '#3b82f6',
+                  weight: 3,
+                  opacity: 0.85,
+                  dashArray: '6, 6',
+                }}
+              />
+            )}
+
+            {/* Markers */}
+            {mappedStops.map((stop, idx) => (
+              <Marker
                 key={stop.id || idx}
-                className={`route-node-pin ${idx === activeStopIndex ? 'active' : ''}`}
-                onClick={() => setActiveStopIndex(idx)}
-                title={`View ${stop.title}`}
+                position={stop.coords}
+                icon={createNumberedIcon(idx + 1, idx === activeStopIndex)}
+                eventHandlers={{
+                  click: () => setActiveStopIndex(idx),
+                }}
               >
-                <span className="node-number">{idx + 1}</span>
-                <span className="node-pulse"></span>
-              </button>
+                <Popup className="saas-leaflet-popup">
+                  <div className="popup-inner">
+                    <span className="popup-badge">Leg {idx + 1}</span>
+                    <strong className="popup-title">{stop.title || `Stage ${idx + 1}`}</strong>
+                    {stop.startDate && (
+                      <span className="popup-meta">📅 {stop.startDate}</span>
+                    )}
+                    {stop.budget > 0 && (
+                      <span className="popup-meta text-success">💰 ${Number(stop.budget).toLocaleString()}</span>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
             ))}
-          </div>
+          </MapContainer>
         </div>
       </div>
 
       {/* Route Stops Cards Grid */}
       <div className="route-stops-feed mt-3">
-        {stops.map((stop, idx) => (
+        {mappedStops.map((stop, idx) => (
           <div 
             key={stop.id || idx}
             className={`route-leg-card ${idx === activeStopIndex ? 'active-leg' : ''}`}

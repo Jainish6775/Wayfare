@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiMapPin, FiCalendar, FiClock, FiEdit2, FiPieChart, FiList, FiAlertTriangle, FiPlus, FiPrinter, FiCheck, FiHome, FiCamera, FiCoffee, FiNavigation, FiX, FiDollarSign } from 'react-icons/fi';
+import { FiArrowLeft, FiMapPin, FiCalendar, FiClock, FiEdit2, FiPieChart, FiList, FiAlertTriangle, FiPlus, FiPrinter, FiCheck, FiHome, FiCamera, FiCoffee, FiNavigation, FiX, FiDollarSign, FiShare2 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
-import { tripsAPI } from '../../services/api';
+import { tripsAPI, expensesAPI, stopsAPI } from '../../services/api';
 import { sampleTripDetailsMap } from '../../data/sampleTrips';
 import './TripDetails.css';
 
@@ -11,10 +11,10 @@ export default function TripDetails() {
   const navigate = useNavigate();
   const [trip, setTrip] = useState(null);
   const [budgetData, setBudgetData] = useState(null);
+  const [stops, setStops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('budget'); // 'budget' or 'timeline'
   const [currency, setCurrency] = useState('USD');
-  const [showShareModal, setShowShareModal] = useState(false);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -82,6 +82,14 @@ export default function TripDetails() {
         breakdown: { accommodation: 850, activity: 450, meal: 350, transport: 200 }
       });
 
+      // Load stops
+      try {
+        const stopsRes = await stopsAPI.getAll(id);
+        if (Array.isArray(stopsRes.data)) {
+          setStops(stopsRes.data);
+        }
+      } catch {}
+
     } catch {
       toast.error('Failed to load expedition details');
     } finally {
@@ -137,7 +145,7 @@ export default function TripDetails() {
     window.print();
   };
 
-  const handleAddExpenseSubmit = (e) => {
+  const handleAddExpenseSubmit = async (e) => {
     e.preventDefault();
     if (!newExpense.amount || Number(newExpense.amount) <= 0) {
       toast.error('Please enter a valid expense amount.');
@@ -146,24 +154,45 @@ export default function TripDetails() {
 
     const addedAmt = Number(newExpense.amount);
     const cat = newExpense.category;
+    const desc = newExpense.title || `${cat.charAt(0).toUpperCase() + cat.slice(1)} expense`;
 
-    const updatedBreakdown = {
-      ...breakdownData,
-      [cat]: (breakdownData[cat] || 0) + addedAmt
-    };
+    try {
+      await expensesAPI.add(id, {
+        category: cat,
+        description: desc,
+        amount: addedAmt,
+        currency: currency || 'USD',
+        expense_date: new Date().toISOString().split('T')[0]
+      });
 
-    const updatedSpent = totalCost + addedAmt;
+      // Refresh real budget from backend
+      try {
+        const budgetRes = await tripsAPI.getBudget(id);
+        if (budgetRes.data) {
+          setBudgetData(budgetRes.data);
+        }
+      } catch {}
 
-    setBudgetData({
-      ...budgetData,
-      total_spent: updatedSpent,
-      remaining: totalBudget - updatedSpent,
-      breakdown: updatedBreakdown
-    });
+      toast.success(`Logged ${desc} of ${formatAmt(addedAmt)} to cloud!`);
+    } catch {
+      // Local fallback for demo trips
+      const updatedBreakdown = {
+        ...breakdownData,
+        [cat]: (breakdownData[cat] || 0) + addedAmt
+      };
+      const updatedSpent = totalCost + addedAmt;
+
+      setBudgetData({
+        ...budgetData,
+        total_spent: updatedSpent,
+        remaining: totalBudget - updatedSpent,
+        breakdown: updatedBreakdown
+      });
+      toast.success(`Logged ${desc} of ${formatAmt(addedAmt)}!`);
+    }
 
     setShowAddExpenseModal(false);
     setNewExpense({ title: '', category: 'accommodation', amount: '', notes: '' });
-    toast.success(`Logged ${newExpense.title || cat} expense of ${formatAmt(addedAmt)}!`);
   };
 
   if (loading) {
@@ -234,6 +263,9 @@ export default function TripDetails() {
             <option value="INR">INR (₹)</option>
           </select>
 
+          <button className="btn btn-secondary btn-sm" onClick={handleCopyShareLink} title="Copy shareable link">
+            {copied ? <><FiCheck /> Copied</> : <><FiShare2 /> Share</>}
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={handlePrintPDF}>
             <FiPrinter /> Export PDF
           </button>
@@ -328,29 +360,49 @@ export default function TripDetails() {
           <div className="card p-6">
             <h3 className="text-sm font-bold text-primary uppercase tracking-wider mb-4">Expedition Stage Schedule</h3>
             
-            <div className="activity-box">
-              <div className="activity-box-header">
-                <span className="activity-time-pill"><FiClock size={11} /> 09:00 AM</span>
-                <span className="activity-box-title">Airport Arrival & Private Transit</span>
-              </div>
-              <p className="text-xs text-secondary">Private luxury shuttle arrival at resort terminal with check-in.</p>
-            </div>
+            {stops.length > 0 ? (
+              stops.map((stop, sIdx) => (
+                <div key={stop.id || sIdx} className="activity-box">
+                  <div className="activity-box-header">
+                    <span className="activity-time-pill">
+                      <FiClock size={11} /> Leg {sIdx + 1} • {stop.arrival_date ? new Date(stop.arrival_date).toLocaleDateString() : 'Date TBD'}
+                    </span>
+                    <span className="activity-box-title">
+                      {stop.destination_name || `Stage ${sIdx + 1}`}
+                    </span>
+                  </div>
+                  <p className="text-xs text-secondary">
+                    {stop.notes || `Transit and activities scheduled for ${stop.destination_name || 'this coordinate'}.`}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="activity-box">
+                  <div className="activity-box-header">
+                    <span className="activity-time-pill"><FiClock size={11} /> 09:00 AM</span>
+                    <span className="activity-box-title">Airport Arrival & Private Transit</span>
+                  </div>
+                  <p className="text-xs text-secondary">Private luxury shuttle arrival at resort terminal with check-in.</p>
+                </div>
 
-            <div className="activity-box">
-              <div className="activity-box-header">
-                <span className="activity-time-pill"><FiClock size={11} /> 01:30 PM</span>
-                <span className="activity-box-title">Curated Coastal Tour & Heritage Lunch</span>
-              </div>
-              <p className="text-xs text-secondary">Explore coastal landmarks, historic architecture, and local cuisine tasting.</p>
-            </div>
+                <div className="activity-box">
+                  <div className="activity-box-header">
+                    <span className="activity-time-pill"><FiClock size={11} /> 01:30 PM</span>
+                    <span className="activity-box-title">Curated Coastal Tour & Heritage Lunch</span>
+                  </div>
+                  <p className="text-xs text-secondary">Explore coastal landmarks, historic architecture, and local cuisine tasting.</p>
+                </div>
 
-            <div className="activity-box">
-              <div className="activity-box-header">
-                <span className="activity-time-pill"><FiClock size={11} /> 06:00 PM</span>
-                <span className="activity-box-title">Sunset Scenic Cruise & Dinner</span>
-              </div>
-              <p className="text-xs text-secondary">Catamaran sunset sailing excursion with 3-course private dining.</p>
-            </div>
+                <div className="activity-box">
+                  <div className="activity-box-header">
+                    <span className="activity-time-pill"><FiClock size={11} /> 06:00 PM</span>
+                    <span className="activity-box-title">Sunset Scenic Cruise & Dinner</span>
+                  </div>
+                  <p className="text-xs text-secondary">Catamaran sunset sailing excursion with 3-course private dining.</p>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

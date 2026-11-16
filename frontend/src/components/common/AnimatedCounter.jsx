@@ -18,7 +18,6 @@ export default function AnimatedCounter({
     const target = Number(value) || 0;
     
     if (target === 0) {
-      setCount(0);
       return;
     }
 

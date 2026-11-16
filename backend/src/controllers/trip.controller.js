@@ -3,10 +3,29 @@ const TripModel = require('../models/trip.model');
 const tripController = {
   async createTrip(req, res, next) {
     try {
-      const { name, description, coverImage, startDate, endDate, startingLocation, budget, travelerCount, visibility } = req.body;
+      const { 
+        name, 
+        description, 
+        coverImage, 
+        cover_image, 
+        startDate, 
+        start_date, 
+        endDate, 
+        end_date, 
+        startingLocation, 
+        starting_location, 
+        budget, 
+        travelerCount, 
+        traveler_count, 
+        visibility, 
+        status 
+      } = req.body;
       const userId = req.user.id;
 
-      if (!name || !startDate || !endDate) {
+      const effectiveStartDate = startDate || start_date;
+      const effectiveEndDate = endDate || end_date;
+
+      if (!name || !effectiveStartDate || !effectiveEndDate) {
         return res.status(400).json({ error: 'Name, start date, and end date are required.' });
       }
 
@@ -14,13 +33,14 @@ const tripController = {
         userId,
         name,
         description,
-        coverImage,
-        startDate,
-        endDate,
-        startingLocation,
+        coverImage: coverImage || cover_image,
+        startDate: effectiveStartDate,
+        endDate: effectiveEndDate,
+        startingLocation: startingLocation || starting_location,
         budget,
-        travelerCount,
-        visibility
+        travelerCount: travelerCount || traveler_count,
+        visibility,
+        status: status || 'draft'
       });
 
       const newTrip = await TripModel.findById(tripId);
@@ -94,6 +114,22 @@ const tripController = {
 
       await TripModel.delete(id);
       res.json({ message: 'Trip deleted successfully.' });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async duplicateTrip(req, res, next) {
+    try {
+      const { id } = req.params;
+      const trip = await TripModel.findById(id);
+      if (!trip) return res.status(404).json({ error: 'Trip not found.' });
+      if (trip.user_id !== req.user.id && trip.visibility !== 'public') {
+        return res.status(403).json({ error: 'Access denied.' });
+      }
+
+      const duplicated = await TripModel.duplicate(id, req.user.id);
+      res.status(201).json(duplicated);
     } catch (error) {
       next(error);
     }

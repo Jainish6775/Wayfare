@@ -16,11 +16,13 @@ router.post('/', tripController.createTrip);
 router.get('/:id', tripController.getTrip);
 router.put('/:id', tripController.updateTrip);
 router.delete('/:id', tripController.deleteTrip);
+router.post('/:id/duplicate', tripController.duplicateTrip);
 
 // --- Budget & Expenses Routes ---
 router.get('/:tripId/budget', expensesController.getBudgetSummary);
 router.get('/:tripId/expenses', expensesController.getTripExpenses);
 router.post('/:tripId/expenses', expensesController.addExpense);
+router.put('/:tripId/expenses/:id', expensesController.updateExpense);
 router.delete('/:tripId/expenses/:id', expensesController.deleteExpense);
 
 // --- Trip Stop Routes ---

@@ -13,7 +13,7 @@ const TripStopModel = {
 
   async findAllByTrip(tripId) {
     const { rows } = await db.query(
-      `SELECT ts.*, d.name as destination_name, d.image_url as destination_image, d.country
+      `SELECT ts.*, d.name as destination_name, d.image_url as destination_image, d.country, d.latitude, d.longitude
        FROM trip_stops ts
        LEFT JOIN destinations d ON ts.destination_id = d.id
        WHERE ts.trip_id = $1
@@ -29,14 +29,26 @@ const TripStopModel = {
   },
 
   async update(id, fields) {
-    const allowedFields = ['destination_id', 'arrival_date', 'departure_date', 'sequence_order', 'notes'];
+    const keyMapping = {
+      destination_id: 'destination_id',
+      destinationId: 'destination_id',
+      arrival_date: 'arrival_date',
+      arrivalDate: 'arrival_date',
+      departure_date: 'departure_date',
+      departureDate: 'departure_date',
+      sequence_order: 'sequence_order',
+      sequenceOrder: 'sequence_order',
+      notes: 'notes'
+    };
+
     const updates = [];
     const values = [];
     let paramIndex = 1;
 
     for (const [key, value] of Object.entries(fields)) {
-      if (allowedFields.includes(key) && value !== undefined) {
-        updates.push(`${key} = $${paramIndex}`);
+      const dbColumn = keyMapping[key];
+      if (dbColumn && value !== undefined) {
+        updates.push(`${dbColumn} = $${paramIndex}`);
         values.push(value);
         paramIndex++;
       }

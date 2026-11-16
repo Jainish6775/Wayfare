@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { FiCheckCircle, FiArrowRight, FiTarget, FiActivity, FiGlobe, FiShield, FiZap } from 'react-icons/fi';
+import { FiCheckCircle, FiTarget, FiActivity, FiGlobe, FiShield } from 'react-icons/fi';
 import './About.css';
 
 export default function About() {

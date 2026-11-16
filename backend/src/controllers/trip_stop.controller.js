@@ -111,13 +111,15 @@ const tripStopController = {
       const hasAccess = await tripStopController.verifyTripOwnership(req, res, tripId);
       if (!hasAccess) return;
 
-      // Ensure all stops belong to this trip
-      // We'll trust the input for MVP, but a robust app would verify.
-      // Easiest is to update them inside a transaction or sequentially.
-      
+      if (!Array.isArray(stops)) {
+        return res.status(400).json({ error: 'Expected an array of stops' });
+      }
+
       for (const stop of stops) {
-        // Here we ideally verify stop.tripId === tripId. We skip for brevity, just update order.
-        await TripStopModel.update(stop.id, { sequenceOrder: stop.sequenceOrder });
+        const order = stop.sequenceOrder !== undefined ? stop.sequenceOrder : stop.sequence_order;
+        if (stop.id && order !== undefined) {
+          await TripStopModel.update(stop.id, { sequence_order: order });
+        }
       }
 
       res.json({ message: 'Stops reordered successfully.' });

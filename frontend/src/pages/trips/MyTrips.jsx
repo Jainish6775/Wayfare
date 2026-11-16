@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiMapPin, FiCalendar, FiClock, FiDollarSign, FiSearch, FiGrid, FiList, FiArrowRight, FiSliders, FiActivity, FiShield, FiTrendingUp } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiMapPin, FiCalendar, FiClock, FiDollarSign, FiSearch, FiGrid, FiList, FiArrowRight, FiSliders, FiActivity, FiShield } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { tripsAPI } from '../../services/api';
 import { sampleTrips } from '../../data/sampleTrips';
@@ -21,17 +21,8 @@ export default function MyTrips() {
     try {
       setLoading(true);
       const response = await tripsAPI.getAll();
-      let dbTrips = Array.isArray(response.data) ? response.data : [];
-
-      const existingIds = new Set(dbTrips.map(t => t.id));
-      const mergedTrips = [...dbTrips];
-      sampleTrips.forEach(sample => {
-        if (!existingIds.has(sample.id)) {
-          mergedTrips.push(sample);
-        }
-      });
-
-      setTrips(mergedTrips);
+      const dbTrips = Array.isArray(response.data) ? response.data : [];
+      setTrips(dbTrips.length > 0 ? dbTrips : sampleTrips);
     } catch {
       setTrips(sampleTrips);
     } finally {

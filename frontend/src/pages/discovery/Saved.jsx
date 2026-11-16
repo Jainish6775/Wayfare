@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiTrash2, FiPlus, FiMapPin, FiStar, FiBookmark, FiArrowRight } from 'react-icons/fi';
+import { FiTrash2, FiPlus, FiMapPin, FiArrowRight } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { savedAPI } from '../../services/api';
 import famousCitiesData from '../../data/famousCities';
@@ -90,13 +90,6 @@ export default function Saved() {
             country: item.country || 'Global',
             days: item.days || 'Flexible'
           };
-        });
-
-        const existingTitles = new Set(mapped.map(m => m.title));
-        defaultSavedItems.forEach(d => {
-          if (!existingTitles.has(d.title)) {
-            mapped.push(d);
-          }
         });
 
         setSavedItems(mapped);

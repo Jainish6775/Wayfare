@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FiHeart, FiMessageCircle, FiShare2, FiSend, FiMapPin, FiCopy, FiTrendingUp, FiAward, FiShield } from 'react-icons/fi';
+import { FiHeart, FiMessageCircle, FiShare2, FiSend, FiMapPin, FiCopy, FiTrendingUp, FiAward } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { communityAPI } from '../../services/api';
@@ -105,7 +105,8 @@ export default function Community() {
     fetchCommunityTrips();
   }, [fetchCommunityTrips]);
 
-  const handleLike = (id) => {
+  const handleLike = async (id) => {
+    // Optimistic UI update
     setPosts(posts.map(p => {
       if (p.id === id) {
         return {
@@ -116,9 +117,28 @@ export default function Community() {
       }
       return p;
     }));
+
+    try {
+      if (typeof id === 'number' || !isNaN(Number(id))) {
+        await communityAPI.likeTrip(id);
+      }
+    } catch {
+      // Local fallback
+    }
   };
 
-  const handleForkItinerary = (tripDetails) => {
+  const handleForkItinerary = async (tripDetails) => {
+    if (!tripDetails) return;
+    try {
+      if (tripDetails.id && (typeof tripDetails.id === 'number' || !isNaN(Number(tripDetails.id)))) {
+        const res = await communityAPI.copyTrip(tripDetails.id);
+        toast.success(`Cloned "${tripDetails.title}" into your expeditions!`);
+        navigate(`/trips/${res.data.id}/itinerary`);
+        return;
+      }
+    } catch {
+      // Fallback to studio query params
+    }
     navigate(`/trips/new?destination=${encodeURIComponent(tripDetails.destinations)}&image=${encodeURIComponent(tripDetails.image)}`);
     toast.success(`Cloning "${tripDetails.title}" into your studio!`);
   };

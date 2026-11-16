@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiHome, FiCompass, FiMap, FiCalendar, FiUsers, FiBookmark, FiUser, FiLogOut, FiPlus, FiChevronDown, FiShield, FiActivity } from 'react-icons/fi';
+import { FiHome, FiCompass, FiMap, FiCalendar, FiUsers, FiBookmark, FiUser, FiLogOut, FiPlus, FiChevronDown } from 'react-icons/fi';
 import './Sidebar.css';
 
 export default function Sidebar() {

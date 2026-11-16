@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiMail, FiMapPin, FiSend, FiCheckCircle, FiChevronDown, FiHelpCircle } from 'react-icons/fi';
+import { FiMail, FiMapPin, FiSend, FiCheckCircle } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import './Contact.css';
 
@@ -12,7 +12,6 @@ export default function Contact() {
   });
 
   const [submitted, setSubmitted] = useState(false);
-  const [openFaq, setOpenFaq] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

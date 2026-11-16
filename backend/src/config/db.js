@@ -1,11 +1,14 @@
 const { Pool } = require('pg');
 const config = require('./env');
 
+const isLocalDb = !config.databaseUrl || 
+  config.databaseUrl.includes('localhost') || 
+  config.databaseUrl.includes('127.0.0.1') || 
+  config.databaseUrl.includes('sslmode=disable');
+
 const pool = new Pool({
   connectionString: config.databaseUrl,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: isLocalDb ? false : { rejectUnauthorized: false },
 });
 
 // Test connection on startup & auto-create required auxiliary tables

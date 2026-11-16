@@ -8,6 +8,12 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('globetrotter_token'));
   const [loading, setLoading] = useState(true);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem('globetrotter_token');
+    setToken(null);
+    setUser(null);
+  }, []);
+
   const fetchUser = useCallback(async () => {
     if (!token) {
       setLoading(false);
@@ -23,7 +29,7 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, logout]);
 
   useEffect(() => {
     fetchUser();
@@ -49,12 +55,6 @@ export function AuthProvider({ children }) {
     setUser(userData);
 
     return userData;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('globetrotter_token');
-    setToken(null);
-    setUser(null);
   };
 
   const updateUser = (updatedUser) => {

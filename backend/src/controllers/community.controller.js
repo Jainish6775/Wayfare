@@ -73,19 +73,45 @@ const communityController = {
       const { tripId } = req.params;
       const userId = req.user.id;
 
-      // Simplistic copy: Just duplicate the trip record for MVP.
       const tripRes = await db.query('SELECT * FROM trips WHERE id = $1 AND visibility = $2', [tripId, 'public']);
       if (tripRes.rows.length === 0) return res.status(404).json({ error: 'Public trip not found' });
 
       const tripToCopy = tripRes.rows[0];
 
+      const startDate = tripToCopy.start_date ? new Date(tripToCopy.start_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      const endDate = tripToCopy.end_date ? new Date(tripToCopy.end_date).toISOString().split('T')[0] : new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+
       const { rows } = await db.query(
-        `INSERT INTO trips (user_id, name, starting_location, duration_days, budget, cover_image, status, visibility) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        [userId, `Copy of ${tripToCopy.name}`, tripToCopy.starting_location, tripToCopy.duration_days, tripToCopy.budget, tripToCopy.cover_image, 'draft', 'private']
+        `INSERT INTO trips (user_id, name, description, cover_image, start_date, end_date, starting_location, budget, traveler_count, visibility, status) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+        [
+          userId,
+          `Copy of ${tripToCopy.name}`,
+          tripToCopy.description,
+          tripToCopy.cover_image,
+          startDate,
+          endDate,
+          tripToCopy.starting_location,
+          tripToCopy.budget || 0,
+          tripToCopy.traveler_count || 1,
+          'private',
+          'draft'
+        ]
       );
 
-      res.status(201).json(rows[0]);
+      const newTrip = rows[0];
+
+      // Clone trip stops if present
+      const stopRows = await db.query('SELECT * FROM trip_stops WHERE trip_id = $1 ORDER BY sequence_order ASC', [tripId]);
+      for (const stop of stopRows.rows) {
+        await db.query(
+          `INSERT INTO trip_stops (trip_id, destination_id, arrival_date, departure_date, sequence_order, notes)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [newTrip.id, stop.destination_id, stop.arrival_date, stop.departure_date, stop.sequence_order, stop.notes]
+        );
+      }
+
+      res.status(201).json(newTrip);
     } catch (error) {
       next(error);
     }

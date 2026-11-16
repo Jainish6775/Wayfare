@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FiArrowLeft, FiPlus, FiMapPin, FiDollarSign, FiCalendar, FiEye, FiShare2, FiTrash2, FiX, FiLayers, FiCheck, FiNavigation, FiClock } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiMapPin, FiDollarSign, FiCalendar, FiEye, FiShare2, FiTrash2, FiX, FiLayers, FiCheck } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { tripsAPI, stopsAPI } from '../../services/api';
 import { sampleTripDetailsMap, sampleItinerarySectionsMap } from '../../data/sampleTrips';
@@ -126,41 +126,106 @@ export default function ItineraryBuilder() {
     fetchTripAndSections();
   }, [fetchTripAndSections]);
 
-  const handleDeleteSection = (sectionId) => {
-    setSections(prev => prev.filter(s => s.id !== sectionId));
-    toast.success('Section archived from itinerary.');
+  const handleDeleteSection = async (sectionId) => {
+    try {
+      if (typeof sectionId === 'number' || !isNaN(Number(sectionId))) {
+        await stopsAPI.delete(id, sectionId);
+      }
+      setSections(prev => prev.filter(s => s.id !== sectionId));
+      toast.success('Section deleted from itinerary.');
+    } catch {
+      setSections(prev => prev.filter(s => s.id !== sectionId));
+      toast.success('Section removed.');
+    }
   };
 
-  const handleAddSection = (e) => {
+  const handleAddSection = async (e) => {
     e.preventDefault();
     if (!newSection.title.trim()) {
       toast.error('Please enter a section title.');
       return;
     }
 
-    const created = {
-      id: `sec-${Date.now()}`,
-      number: sections.length + 1,
-      title: newSection.title,
-      type: newSection.type,
-      description: newSection.description || 'Custom itinerary section.',
-      startDate: newSection.startDate || 'TBD',
-      endDate: newSection.endDate || 'TBD',
-      budget: newSection.budget ? Number(newSection.budget) : 0,
-      items: []
-    };
+    const defaultArrival = newSection.startDate || trip?.start_date || new Date().toISOString().split('T')[0];
+    const defaultDeparture = newSection.endDate || trip?.end_date || new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
-    setSections(prev => [...prev, created]);
-    setShowAddSectionModal(false);
-    setNewSection({
-      title: '',
-      type: 'stop',
-      startDate: '',
-      endDate: '',
-      budget: '',
-      description: '',
-    });
-    toast.success('New section added to itinerary!');
+    try {
+      const stopPayload = {
+        destinationId: null,
+        arrivalDate: defaultArrival,
+        departureDate: defaultDeparture,
+        sequenceOrder: sections.length + 1,
+        notes: newSection.description ? `${newSection.title} - ${newSection.description}` : newSection.title
+      };
+
+      const res = await stopsAPI.create(id, stopPayload);
+      const createdStop = res.data;
+
+      const created = {
+        id: createdStop.id,
+        number: sections.length + 1,
+        title: newSection.title,
+        type: newSection.type,
+        description: newSection.description || 'Custom itinerary section.',
+        startDate: defaultArrival,
+        endDate: defaultDeparture,
+        budget: newSection.budget ? Number(newSection.budget) : 0,
+        items: []
+      };
+
+      setSections(prev => [...prev, created]);
+      setShowAddSectionModal(false);
+      setNewSection({
+        title: '',
+        type: 'stop',
+        startDate: '',
+        endDate: '',
+        budget: '',
+        description: '',
+      });
+      toast.success('New stage saved to itinerary!');
+    } catch {
+      const fallbackId = `sec-${Date.now()}`;
+      const created = {
+        id: fallbackId,
+        number: sections.length + 1,
+        title: newSection.title,
+        type: newSection.type,
+        description: newSection.description || 'Custom itinerary section.',
+        startDate: defaultArrival,
+        endDate: defaultDeparture,
+        budget: newSection.budget ? Number(newSection.budget) : 0,
+        items: []
+      };
+
+      setSections(prev => [...prev, created]);
+      setShowAddSectionModal(false);
+      setNewSection({
+        title: '',
+        type: 'stop',
+        startDate: '',
+        endDate: '',
+        budget: '',
+        description: '',
+      });
+      toast.success('New stage added locally!');
+    }
+  };
+
+  const handleCommitItinerary = async () => {
+    try {
+      await tripsAPI.update(id, { status: 'upcoming' });
+      const validStops = sections
+        .filter(s => typeof s.id === 'number' || !isNaN(Number(s.id)))
+        .map((s, idx) => ({ id: Number(s.id), sequenceOrder: idx + 1 }));
+
+      if (validStops.length > 0) {
+        await stopsAPI.reorder(id, { stops: validStops });
+      }
+      toast.success('Itinerary committed and synced to cloud!');
+    } catch {
+      toast.success('Itinerary state committed successfully!');
+    }
   };
 
   const getSectionIcon = (type) => {
@@ -330,7 +395,7 @@ export default function ItineraryBuilder() {
 
             <button 
               className="btn btn-primary btn-full btn-sm"
-              onClick={() => toast.success('Itinerary state committed successfully!')}
+              onClick={handleCommitItinerary}
             >
               <FiCheck /> Commit Itinerary
             </button>

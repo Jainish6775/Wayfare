@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { FiArrowLeft, FiPlus, FiCheck, FiSave, FiMapPin, FiCalendar, FiDollarSign, FiUsers, FiCompass, FiZap, FiCheckCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiCheck, FiSave, FiMapPin, FiCalendar, FiDollarSign, FiZap } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { tripsAPI, destinationsAPI, activitiesAPI } from '../../services/api';
 import './CreateTrip.css';
@@ -26,7 +26,6 @@ export default function CreateTrip() {
 
   const [errors, setErrors] = useState({});
   const [suggestions, setSuggestions] = useState([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
 
   // Pre-fill from URL params or location state
   useEffect(() => {

@@ -10,8 +10,7 @@ import {
   FiArrowRight, 
   FiArrowLeft,
   FiZap, 
-  FiShield, 
-  FiCheck
+  FiShield
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import './Auth.css';

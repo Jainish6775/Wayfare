@@ -10,17 +10,20 @@ const destinationsRoutes = require('./routes/destinations.routes');
 const activitiesRoutes = require('./routes/activities.routes');
 const itineraryRoutes = require('./routes/itinerary.routes');
 const communityRoutes = require('./routes/community.routes');
+const savedDestinationsRoutes = require('./routes/saved_destinations.routes');
 
 const app = express();
 
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like curl) or any localhost dev origin
-    if (!origin || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+    // Allow requests with no origin (like curl) or localhost dev origins
+    if (!origin) return callback(null, true);
+    if (config.frontendUrl && origin === config.frontendUrl) return callback(null, true);
+    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
       return callback(null, true);
     }
-    return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
 }));
@@ -39,6 +42,7 @@ app.use('/api/destinations', destinationsRoutes);
 app.use('/api/activities', activitiesRoutes);
 app.use('/api/stops', itineraryRoutes);
 app.use('/api/community', communityRoutes);
+app.use('/api/saved-destinations', savedDestinationsRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

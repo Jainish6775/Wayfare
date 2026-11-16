@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { authAPI, tripsAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { FiUser, FiMail, FiMapPin, FiEdit2, FiCalendar, FiDollarSign, FiEye, FiX, FiSave, FiGlobe, FiShield, FiCheckCircle, FiActivity } from 'react-icons/fi';
+import { FiUser, FiMapPin, FiEdit2, FiEye, FiX, FiSave, FiShield } from 'react-icons/fi';
 import { sampleTrips } from '../../data/sampleTrips';
 import './Profile.css';
 
@@ -16,16 +16,32 @@ export default function Profile() {
   const [trips, setTrips] = useState([]);
 
   const [formData, setFormData] = useState({
-    firstName: user?.first_name || 'Jainish',
-    lastName: user?.last_name || 'Talpara',
-    email: user?.email || 'jainishtalpara.in901@gmail.com',
-    phone: user?.phone || '08849736676',
-    city: user?.city || 'Rajkot',
-    country: user?.country || 'India',
-    bio: user?.bio || 'Executive Globetrotter exploring global heritage cities, alpine trails, and coastal archipelagos.',
-    preferredCurrency: user?.preferred_currency || 'USD ($)',
+    firstName: user?.first_name || '',
+    lastName: user?.last_name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    city: user?.city || '',
+    country: user?.country || '',
+    bio: user?.bio || 'Wayfare explorer discovering world destinations and trails.',
+    preferredCurrency: user?.preferred_currency || 'USD',
     profileImage: user?.profile_image || '/images/user_profile.png',
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.first_name || '',
+        lastName: user.last_name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        city: user.city || '',
+        country: user.country || '',
+        bio: user.bio || 'Wayfare explorer discovering world destinations and trails.',
+        preferredCurrency: user.preferred_currency || 'USD',
+        profileImage: user.profile_image || '/images/user_profile.png',
+      });
+    }
+  }, [user]);
 
   const fetchTripsData = useCallback(async () => {
     try {

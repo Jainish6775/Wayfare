@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FiGlobe, FiGithub, FiTwitter, FiCompass, FiShield, FiHeart } from 'react-icons/fi';
+import { FiShield, FiHeart } from 'react-icons/fi';
 import './PublicFooter.css';
 
 export default function PublicFooter() {

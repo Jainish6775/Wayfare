@@ -8,7 +8,7 @@ import './TripCalendar.css';
 export default function TripCalendar() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 1)); // August 2026 default
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
 
