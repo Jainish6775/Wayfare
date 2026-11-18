@@ -17,6 +17,7 @@ router.get('/:id', tripController.getTrip);
 router.put('/:id', tripController.updateTrip);
 router.delete('/:id', tripController.deleteTrip);
 router.post('/:id/duplicate', tripController.duplicateTrip);
+router.post('/:id/share', tripController.shareTrip);
 
 // --- Budget & Expenses Routes ---
 router.get('/:tripId/budget', expensesController.getBudgetSummary);

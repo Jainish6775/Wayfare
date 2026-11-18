@@ -11,6 +11,7 @@ const activitiesRoutes = require('./routes/activities.routes');
 const itineraryRoutes = require('./routes/itinerary.routes');
 const communityRoutes = require('./routes/community.routes');
 const savedDestinationsRoutes = require('./routes/saved_destinations.routes');
+const tripController = require('./controllers/trip.controller');
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/activities', activitiesRoutes);
 app.use('/api/stops', itineraryRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/saved-destinations', savedDestinationsRoutes);
+app.get('/api/shared/:token', tripController.getSharedTrip);
 
 // Error handler (must be last)
 app.use(errorHandler);

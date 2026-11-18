@@ -9,6 +9,7 @@ router.get('/', communityController.getPublicTrips);
 // Protected routes
 router.use(authenticate);
 router.post('/:tripId/like', communityController.likeTrip);
+router.post('/:tripId/save', communityController.saveTrip);
 router.post('/:tripId/copy', communityController.copyTrip);
 
 module.exports = router;

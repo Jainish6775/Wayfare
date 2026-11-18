@@ -68,6 +68,36 @@ const communityController = {
     }
   },
 
+  async saveTrip(req, res, next) {
+    try {
+      const { tripId } = req.params;
+      const userId = req.user.id;
+
+      // Check if table exists, create if not
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS saved_trips (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL,
+          trip_id INT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, trip_id)
+        );
+      `);
+
+      const checkRes = await db.query('SELECT * FROM saved_trips WHERE user_id = $1 AND trip_id = $2', [userId, tripId]);
+
+      if (checkRes.rows.length > 0) {
+        await db.query('DELETE FROM saved_trips WHERE user_id = $1 AND trip_id = $2', [userId, tripId]);
+        res.json({ message: 'Unsaved from collection', saved: false });
+      } else {
+        await db.query('INSERT INTO saved_trips (user_id, trip_id) VALUES ($1, $2)', [userId, tripId]);
+        res.json({ message: 'Saved to collection', saved: true });
+      }
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async copyTrip(req, res, next) {
     try {
       const { tripId } = req.params;

@@ -15,6 +15,7 @@ import './styles/components.css';
 const Home = lazy(() => import('./pages/public/Home'));
 const About = lazy(() => import('./pages/public/About'));
 const Contact = lazy(() => import('./pages/public/Contact'));
+const SharedTrip = lazy(() => import('./pages/public/SharedTrip'));
 
 // Auth pages
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -110,6 +111,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/shared/:token" element={<SharedTrip />} />
               </Route>
 
               {/* Public Auth routes */}

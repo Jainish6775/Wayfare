@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FiCompass, FiShield, FiWifi, FiGlobe, FiActivity, FiArrowRight } from 'react-icons/fi';
+import { FiCompass, FiShield, FiWifi, FiArrowRight } from 'react-icons/fi';
 import './LoadingScreen.css';
 
 const DEFAULT_TELEMETRY_STEPS = [

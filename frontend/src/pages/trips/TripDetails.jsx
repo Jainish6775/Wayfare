@@ -164,7 +164,18 @@ export default function TripDetails() {
     return { lat: 35.0116, lon: 135.7681, name: loc || 'Kyoto, Japan' };
   };
 
-  const handleCopyShareLink = () => {
+  const handleCopyShareLink = async () => {
+    try {
+      const res = await tripsAPI.share(id);
+      if (res.data?.share_token) {
+        const shareUrl = `${window.location.origin}/shared/${res.data.share_token}`;
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        toast.success('Public share link generated & copied to clipboard!');
+        setTimeout(() => setCopied(false), 3000);
+        return;
+      }
+    } catch {}
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     toast.success('Share link copied to clipboard!');

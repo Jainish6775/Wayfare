@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FiSearch, FiPlus, FiArrowRight, FiMapPin, FiCalendar, FiClock, FiCompass, FiZap, FiCheckCircle, FiShare2, FiTrendingUp, FiActivity, FiShield, FiGlobe } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { tripsAPI } from '../../services/api';

@@ -62,9 +62,10 @@ const UserModel = {
 
   async setInterests(userId, interests) {
     await db.query('DELETE FROM travel_interests WHERE user_id = $1', [userId]);
-    if (interests && interests.length > 0) {
+    const uniqueInterests = Array.isArray(interests) ? [...new Set(interests.filter(Boolean))] : [];
+    if (uniqueInterests.length > 0) {
       const values = [];
-      const placeholders = interests.map((interest, i) => {
+      const placeholders = uniqueInterests.map((interest, i) => {
         values.push(userId, interest);
         return `($${i * 2 + 1}, $${i * 2 + 2})`;
       }).join(', ');

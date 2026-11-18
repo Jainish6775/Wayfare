@@ -114,14 +114,19 @@ const expensesController = {
       const activityRes = await db.query(`SELECT SUM(estimated_cost) as val FROM scheduled_activities sa JOIN trip_stops ts ON sa.trip_stop_id = ts.id WHERE ts.trip_id = $1`, [tripId]);
       const accRes = await db.query(`SELECT SUM(cost) as val FROM accommodations a JOIN trip_stops ts ON a.trip_stop_id = ts.id WHERE ts.trip_id = $1`, [tripId]);
       const transportRes = await db.query(`SELECT SUM(cost) as val FROM transports t JOIN trip_stops ts ON t.trip_stop_id = ts.id WHERE ts.trip_id = $1`, [tripId]);
-      const miscRes = await db.query(`SELECT SUM(amount) as val FROM expenses WHERE trip_id = $1`, [tripId]);
+      
+      const expenseCatsRes = await db.query(`SELECT category, SUM(amount) as val FROM expenses WHERE trip_id = $1 GROUP BY category`, [tripId]);
+      const expenseCatMap = {};
+      for (const row of expenseCatsRes.rows) {
+        expenseCatMap[row.category] = Number(row.val || 0);
+      }
 
       const breakdown = {
-        activity: Number(activityRes.rows[0].val || 0),
-        accommodation: Number(accRes.rows[0].val || 0),
-        transport: Number(transportRes.rows[0].val || 0),
-        misc: Number(miscRes.rows[0].val || 0),
-        meal: 0
+        activity: Number(activityRes.rows[0].val || 0) + (expenseCatMap['activity'] || 0),
+        accommodation: Number(accRes.rows[0].val || 0) + (expenseCatMap['accommodation'] || 0),
+        transport: Number(transportRes.rows[0].val || 0) + (expenseCatMap['transport'] || 0),
+        meal: expenseCatMap['meal'] || 0,
+        misc: (expenseCatMap['miscellaneous'] || 0) + (expenseCatMap['misc'] || 0)
       };
 
       res.json({

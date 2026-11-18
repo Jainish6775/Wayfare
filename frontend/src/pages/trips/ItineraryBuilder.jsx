@@ -304,7 +304,16 @@ export default function ItineraryBuilder() {
           </button>
           <button 
             className="btn btn-primary btn-sm"
-            onClick={() => {
+            onClick={async () => {
+              try {
+                const res = await tripsAPI.share(id);
+                if (res.data?.share_token) {
+                  const shareUrl = `${window.location.origin}/shared/${res.data.share_token}`;
+                  await navigator.clipboard?.writeText?.(shareUrl);
+                  toast.success('Public expedition link copied to clipboard!');
+                  return;
+                }
+              } catch {}
               navigator.clipboard?.writeText?.(window.location.href);
               toast.success('Itinerary link copied to clipboard!');
             }}

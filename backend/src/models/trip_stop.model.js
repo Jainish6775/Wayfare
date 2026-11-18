@@ -2,11 +2,18 @@ const db = require('../config/db');
 
 const TripStopModel = {
   async create({ tripId, destinationId, arrivalDate, departureDate, sequenceOrder, notes }) {
+    let finalDestId = destinationId;
+    if (!finalDestId) {
+      try {
+        const dRes = await db.query('SELECT id FROM destinations LIMIT 1');
+        if (dRes.rows.length > 0) finalDestId = dRes.rows[0].id;
+      } catch {}
+    }
     const { rows } = await db.query(
       `INSERT INTO trip_stops (trip_id, destination_id, arrival_date, departure_date, sequence_order, notes)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id`,
-      [tripId, destinationId || null, arrivalDate, departureDate, sequenceOrder || 1, notes || null]
+      [tripId, finalDestId || null, arrivalDate, departureDate, sequenceOrder || 1, notes || null]
     );
     return rows[0].id;
   },

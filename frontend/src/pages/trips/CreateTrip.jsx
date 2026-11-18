@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { FiArrowLeft, FiPlus, FiCheck, FiSave, FiMapPin, FiCalendar, FiDollarSign, FiZap } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiCheck, FiSave, FiZap } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { tripsAPI, destinationsAPI, activitiesAPI } from '../../services/api';
 import famousCitiesData from '../../data/famousCities';

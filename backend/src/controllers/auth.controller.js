@@ -5,10 +5,13 @@ const { generateToken } = require('../utils/token');
 const authController = {
   async register(req, res, next) {
     try {
-      const { email, password, firstName, lastName, phone, city, country, bio, interests } = req.body;
+      const { email, password, firstName, first_name, lastName, last_name, phone, city, country, bio, interests } = req.body;
+
+      const effectiveFirstName = firstName || first_name;
+      const effectiveLastName = lastName || last_name;
 
       // Validation
-      if (!email || !password || !firstName || !lastName) {
+      if (!email || !password || !effectiveFirstName || !effectiveLastName) {
         return res.status(400).json({
           error: 'Email, password, first name, and last name are required.',
         });
@@ -29,8 +32,8 @@ const authController = {
       const userId = await UserModel.create({
         email,
         passwordHash,
-        firstName,
-        lastName,
+        firstName: effectiveFirstName,
+        lastName: effectiveLastName,
         phone,
         city,
         country,
@@ -119,17 +122,34 @@ const authController = {
 
   async updateProfile(req, res, next) {
     try {
-      const { first_name, last_name, phone, city, country, bio, preferred_currency, preferred_language, interests } = req.body;
+      const { 
+        first_name, 
+        firstName, 
+        last_name, 
+        lastName, 
+        phone, 
+        city, 
+        country, 
+        bio, 
+        profile_image, 
+        profileImage, 
+        preferred_currency, 
+        preferredCurrency, 
+        preferred_language, 
+        preferredLanguage, 
+        interests 
+      } = req.body;
 
       await UserModel.update(req.user.id, {
-        first_name,
-        last_name,
+        first_name: first_name !== undefined ? first_name : firstName,
+        last_name: last_name !== undefined ? last_name : lastName,
         phone,
         city,
         country,
         bio,
-        preferred_currency,
-        preferred_language,
+        profile_image: profile_image !== undefined ? profile_image : profileImage,
+        preferred_currency: preferred_currency !== undefined ? preferred_currency : preferredCurrency,
+        preferred_language: preferred_language !== undefined ? preferred_language : preferredLanguage,
       });
 
       if (interests) {

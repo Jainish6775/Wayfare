@@ -94,6 +94,19 @@ const itineraryController = {
   },
 
   // Accommodations
+  async getAccommodationsForStop(req, res, next) {
+    try {
+      const { stopId } = req.params;
+      const check = await itineraryController.verifyStopAccess(stopId, req.user.id, true);
+      if (check.error) return res.status(check.status).json({ error: check.error });
+
+      const { rows } = await db.query('SELECT * FROM accommodations WHERE trip_stop_id = $1 ORDER BY check_in_date ASC', [stopId]);
+      res.json(rows);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async addAccommodation(req, res, next) {
     try {
       const { stopId } = req.params;
@@ -155,6 +168,19 @@ const itineraryController = {
   },
 
   // Transports
+  async getTransportsForStop(req, res, next) {
+    try {
+      const { stopId } = req.params;
+      const check = await itineraryController.verifyStopAccess(stopId, req.user.id, true);
+      if (check.error) return res.status(check.status).json({ error: check.error });
+
+      const { rows } = await db.query('SELECT * FROM transports WHERE trip_stop_id = $1 ORDER BY departure_time ASC', [stopId]);
+      res.json(rows);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async addTransport(req, res, next) {
     try {
       const { stopId } = req.params;

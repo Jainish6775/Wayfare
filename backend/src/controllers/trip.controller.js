@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+const db = require('../config/db');
 const TripModel = require('../models/trip.model');
 
 const tripController = {
@@ -130,6 +132,79 @@ const tripController = {
 
       const duplicated = await TripModel.duplicate(id, req.user.id);
       res.status(201).json(duplicated);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async shareTrip(req, res, next) {
+    try {
+      const { id } = req.params;
+      const trip = await TripModel.findById(id);
+      if (!trip) return res.status(404).json({ error: 'Trip not found.' });
+      if (trip.user_id !== req.user.id) return res.status(403).json({ error: 'Access denied.' });
+
+      // Check if active share link exists
+      const existing = await db.query(
+        'SELECT share_token FROM public_share_links WHERE trip_id = $1 AND is_active = true LIMIT 1',
+        [id]
+      );
+
+      let token;
+      if (existing.rows.length > 0) {
+        token = existing.rows[0].share_token;
+      } else {
+        token = crypto.randomBytes(16).toString('hex');
+        await db.query(
+          'INSERT INTO public_share_links (trip_id, share_token) VALUES ($1, $2)',
+          [id, token]
+        );
+      }
+
+      res.json({
+        success: true,
+        share_token: token,
+        share_url: `/shared/${token}`
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getSharedTrip(req, res, next) {
+    try {
+      const { token } = req.params;
+      if (!token) return res.status(400).json({ error: 'Token is required.' });
+
+      const linkRes = await db.query(
+        `SELECT psl.share_token, t.*, 
+                COALESCE(NULLIF(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''), u.email, 'Traveler') AS creator_name,
+                u.profile_image AS creator_avatar
+         FROM public_share_links psl
+         JOIN trips t ON psl.trip_id = t.id
+         JOIN users u ON t.user_id = u.id
+         WHERE psl.share_token = $1 AND psl.is_active = true`,
+        [token]
+      );
+
+      if (linkRes.rows.length === 0) {
+        return res.status(404).json({ error: 'Shared trip not found or link has expired.' });
+      }
+
+      const trip = linkRes.rows[0];
+
+      // Fetch stops
+      const stopsRes = await db.query(
+        `SELECT ts.*, d.name as destination_name, d.image_url as destination_image, d.country, d.latitude, d.longitude
+         FROM trip_stops ts
+         LEFT JOIN destinations d ON ts.destination_id = d.id
+         WHERE ts.trip_id = $1
+         ORDER BY ts.sequence_order ASC`,
+        [trip.id]
+      );
+
+      trip.stops = stopsRes.rows;
+      res.json(trip);
     } catch (error) {
       next(error);
     }
